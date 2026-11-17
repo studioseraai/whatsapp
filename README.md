@@ -1,39 +1,21 @@
 # Studio Seraai — WhatsApp Art Concierge
 
-WhatsApp Cloud API integration for Studio Seraai. This repository is separate from the public website and SERAAI OS.
+Standalone Next.js application with a browser simulator, Meta webhook, and Supabase conversation storage. This does **not** require Meta credentials to build or preview.
 
-## Base
+## Run
 
-Adapted from the webhook architecture demonstrated in [froggy1014/meta-cloud-api](https://github.com/froggy1014/meta-cloud-api/tree/main/examples/express-simple) (MIT license). This is a lightweight, standalone Node.js/TypeScript bot; it does not include Meta onboarding or automatically enable Business App Coexistence.
+`npm install && npm test && npm run build && npm run dev`
 
-## Getting started
+Open `/` for the simulated five-option concierge. `/api/health` shows configuration status. `/api/webhook` is dormant until Meta Business App Coexistence onboarding is completed.
 
-1. Install Node.js 20+.
-2. Run `npm install`.
-3. Copy `.env.example` to `.env` and configure the actual credentials **locally or in your hosting provider**. Never commit `.env` or access tokens.
-4. Run `npm run dev`.
-5. Configure Meta's verified HTTPS webhook URL as `https://YOUR_HOST/webhook` and subscribe to WhatsApp messages after a supported coexistence onboarding.
-6. Test the five menu routes with a Meta test number before production.
+## Existing Supabase project
 
-Run `npm run build` to compile and `npm start` to start the compiled service. Health endpoint: `GET /health`.
+Private RLS-protected tables: `seraai_whatsapp_conversations`, `seraai_whatsapp_messages`, `seraai_whatsapp_requests`. Only the server-side service key may access them. Artwork search reads existing `seraai_records` JSONB artwork data; search is limited to the first 1000 records and availability must be confirmed.
 
-## Concierge menu
+## Meta onboarding (later)
 
-1. Explore Artworks
-2. Meet Our Artists
-3. Book a Private Viewing
-4. Exhibitions & Events
-5. Speak to Our Team
+**Do not unregister the existing WhatsApp Business mobile app or migrate the number without supported coexistence onboarding.** After Meta setup, add `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_WEBHOOK_VERIFICATION_TOKEN`, `WHATSAPP_APP_SECRET`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY` in Vercel Environment Variables, never Git. Callback: `https://YOUR_DOMAIN/api/webhook`.
 
-Current implementation provides safe message routing and menu placeholders. Live artwork lookup, persistent handoff, Supabase writes and approved outbound templates will be added in subsequent stages.
+## Security and remaining launch tasks
 
-## Operational notes
-
-- Use Meta-approved Business App Coexistence onboarding to keep the existing business number on the mobile app. Do not unregister or migrate the number through a normal API-only flow.
-- Meta Cloud API access and approved templates are required for business-initiated conversations outside permitted windows.
-- The bot should be hosted as a persistent HTTPS service; the example is not deployed yet.
-- Rotate keys if credentials are accidentally shared.
-
-## License
-
-MIT — see `LICENSE`. Based on the upstream MIT-licensed example and adapted for Studio Seraai.
+Webhook POST requires valid Meta `X-Hub-Signature-256`. Tables are RLS-protected and inaccessible to anon/authenticated roles. Messages are deduplicated by provider ID; concurrency-safe queues/retries, staff inbox/notification, data retention, privacy policy, opt-out, and operational monitoring still require hardening before launch. Human handoff flags requests for staff and suppresses further automatic responses, but **does not itself notify a human**. The simulator is local browser-only and stores no data.
