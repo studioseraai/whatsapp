@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {dbReady} from "../../../src/db";export const runtime="nodejs";export function GET(){return NextResponse.json({service:"Studio Seraai WhatsApp",status:"awaiting_meta_onboarding",database_configured:dbReady(),meta_configured:Boolean(process.env.WHATSAPP_ACCESS_TOKEN&&process.env.WHATSAPP_APP_SECRET)});}
