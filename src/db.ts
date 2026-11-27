@@ -3,7 +3,7 @@ const key=()=>process.env.SUPABASE_SECRET_KEY;
 export const dbReady=()=>Boolean(url()&&key());
 async function db<T>(table:string,method:string,query="",body?:unknown,prefer="return=representation"):Promise<T>{
  if(!dbReady())throw Error("Supabase not configured");
- const r=await fetch(url()+"/rest/v1/"+table+query,{method,headers:{apikey:key()!,Authorization:"Bearer "+key()!,"Content-Type":"application/json",Prefer:prefer},body:body===undefined?undefined:JSON.stringify(body),cache:"no-store"});
+ const r=await fetch(url()+"/rest/v1/"+table+query,{method,headers:{apikey:key()!,"Content-Type":"application/json",Prefer:prefer},body:body===undefined?undefined:JSON.stringify(body),cache:"no-store"});
  if(!r.ok)throw Error("Database request failed: "+table+" "+r.status);
  const s=await r.text();return(s?JSON.parse(s):null) as T;
 }
@@ -22,7 +22,10 @@ export async function search(query:string,type:"artwork"|"artist"){
  const needle=query.toLowerCase().trim().slice(0,100);
  if(needle.length<2)return"Please provide at least two letters.";
  const rows=await db<{id:number;data:Record<string,unknown>}[]>("seraai_records","GET","?kind=eq.artwork&select=id,data&limit=1000");
- const found=rows.filter(r=>{const d=r.data;if(d.archived===true||String(d.status||"").toLowerCase()==="sold")return false;const str=type==="artist"?String(d.artist||""):[d.title,d.artist,d.style,d.webId,d.medium].join(" ");return str.toLowerCase().includes(needle);}).slice(0,5);
+ const published=await db<{artwork_id:number}[]>("seraai_publications","GET","?published=eq.true&select=artwork_id&limit=1000");
+ const allowed=new Set(published.map(p=>p.artwork_id));
+ const found=rows.filter(r=>{if(!allowed.has(r.id))return false;const d=r.data;if(d.archived===true||String(d.status||"").toLowerCase()==="sold")return false;const str=type==="artist"?String(d.artist||""):[d.title,d.artist,d.style,d.webId,d.medium].join(" ");return str.toLowerCase().includes(needle);}).slice(0,5);
  if(!found.length)return"No matching catalogue entries found. Our team can assist. Reply MENU.";
  return found.map(r=>type==="artist"?String(r.data.artist||"Unknown"):String(r.data.title||"Untitled")+" — "+String(r.data.artist||"Unknown")+" (ID "+String(r.data.webId||r.id)+")").filter((v,i,a)=>a.indexOf(v)===i).join("\n")+"\n\nAvailability must be confirmed. Reply MENU.";
 }
+export async function checkDatabase(){await Promise.all(["seraai_whatsapp_conversations","seraai_whatsapp_messages","seraai_whatsapp_requests"].map(table=>db(table,"GET","?select=id&limit=0")));return true;}
