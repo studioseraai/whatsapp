@@ -1,4 +1,4 @@
-const url=()=>process.env.SUPABASE_URL?.replace(/\\/$/,"");
+const url=()=>{const u=process.env.SUPABASE_URL;return u?.endsWith("/")?u.slice(0,-1):u;};
 const key=()=>process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY;
 export const dbReady=()=>Boolean(url()&&key());
 
