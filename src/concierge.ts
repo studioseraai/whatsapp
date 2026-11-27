@@ -1,8 +1,10 @@
-export type FlowState="menu"|"artwork"|"artist"|"viewing"|"events"|"human";
+export type FlowState="menu"|"artwork"|"artist"|"viewing"|"events"|"human"|"opted_out";
 export const MENU="Welcome to Studio Seraai — A Gallery Where Walls Breathe Art.\n\n1. Explore Artworks\n2. Meet Our Artists\n3. Book a Private Viewing\n4. Exhibitions & Events\n5. Speak to Our Team\n\nReply 1–5 or MENU.";
 export type Result={reply:string;state:FlowState;request?:"private_viewing"|"human_handoff";details?:string;lookup?:"artwork"|"artist";handoff?:boolean};
 export function respond(text:string,state:FlowState="menu"):Result{
  const x=text.trim().toLowerCase().slice(0,1000);
+ if(["stop","unsubscribe","opt out"].includes(x))return{reply:"Automated messages stopped. Reply START to opt back in.",state:"opted_out",handoff:false};
+ if(state==="opted_out"&&x!=="start")return{reply:"",state:"opted_out",handoff:false};
  if(["menu","hi","hello","start","0","cancel"].includes(x))return{reply:MENU,state:"menu",handoff:false};
  if(x==="1")return{reply:"Please share an artwork title, ID, style, or artist.",state:"artwork"};
  if(x==="2")return{reply:"Which artist would you like to explore?",state:"artist"};
