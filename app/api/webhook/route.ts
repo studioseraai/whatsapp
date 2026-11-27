@@ -23,7 +23,7 @@ export async function POST(req:NextRequest){
    await message(c.id,"inbound",input,m.id);
    if(r.request)await request(c.id,r.request,r.details||input);
    await update(c.id,r.state,r.handoff??c.human_handoff);
-   if(c.human_handoff&&r.state==="human")continue;
+   if(!reply||(c.human_handoff&&r.state==="human"))continue;
    await sendText(m.from,reply);
    await message(c.id,"outbound",reply);
   }catch(e){console.error("Webhook processing error",e);return new Response("Retry later",{status:503});}
