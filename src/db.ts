@@ -74,3 +74,7 @@ export async function checkDatabase(){
  await Promise.all(["seraai_whatsapp_conversations","seraai_whatsapp_messages","seraai_whatsapp_requests"].map(table=>db(table,"GET","?select=id&limit=0")));
  return true;
 }
+
+export async function purgeExpired():Promise<{messages_removed:number;resolved_requests_removed:number}>{
+ return await db<{messages_removed:number;resolved_requests_removed:number}>("rpc/seraai_whatsapp_purge_expired","POST","",{});
+}
